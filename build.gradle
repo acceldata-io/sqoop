@@ -36,7 +36,7 @@ sourceCompatibility = javaSourceCompatibilityVersion
 repositories {
     mavenLocal()
     maven {
-        url 'http://conjars.org/repo/'
+        url 'https://repo1.maven.org/maven2/'
     }
     maven {
         url 'http://maven.cubrid.org/'
