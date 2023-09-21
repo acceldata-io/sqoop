@@ -34,7 +34,7 @@ group = 'org.apache.sqoopgradle'
 sourceCompatibility = javaSourceCompatibilityVersion
 
 repositories {
-    mavenCentral()
+    mavenLocal()
     maven {
         url 'http://conjars.org/repo/'
     }
