@@ -32,7 +32,7 @@ import sys
 try:
   from xml.etree import ElementTree
 except ImportError:
-  print "Building release notes is not supported on this platform."
+  print("Building release notes is not supported on this platform.")
   sys.exit(0)
 
 
@@ -41,14 +41,14 @@ NUM_ARGS = 6
 
 def print_usage(prgm_name):
   """ Print the usage for this program """
-  print "Usage: " + prgm_name + " <target-dir> <git-src> <commit-range> " \
-      + "<newversion> <oldversion>"
-  print ""
-  print "  <target-dir>: Directory where release notes should be written to."
-  print "  <git-src>: Root of the git repository to collect info from."
-  print "  <commit-range>: What set of commits form this release."
-  print "  <newversion>: The version number to print in the release notes."
-  print "  <oldversion>: The previous release version number."
+  print("Usage: " + prgm_name + " <target-dir> <git-src> <commit-range> " \
+      + "<newversion> <oldversion>")
+  print ("")
+  print("  <target-dir>: Directory where release notes should be written to.")
+  print("  <git-src>: Root of the git repository to collect info from.")
+  print("  <commit-range>: What set of commits form this release.")
+  print("  <newversion>: The version number to print in the release notes.")
+  print("  <oldversion>: The previous release version number.")
 
 
 def get_log(git_dir, commit_range):
@@ -224,7 +224,7 @@ def main(argv):
     return 0
 
   if len(argv) < NUM_ARGS:
-    print "Missing required argument(s). Try " + argv[0] + " -h"
+    print("Missing required argument(s). Try " + argv[0] + " -h")
     return 1
 
   target_dir = os.path.abspath(os.path.expanduser(argv[1]))

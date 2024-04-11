@@ -65,7 +65,7 @@ def main():
   elif (cmd_exists("rbt") == 0):
     post_review_tool = "rbt post"
   else:
-    print "please install RBTools"
+    print("please install RBTools")
     sys.exit(1)
 
   patch_file=tempfile.gettempdir() + "/" + opt.jira + ".patch"
@@ -86,16 +86,16 @@ def main():
   p_then.close()
 
   if branch_now != branch_then:
-    print 'ERROR: Your current working branch is from an older version of ' + opt.branch + '. Please rebase first by using git pull --rebase'
+    print('ERROR: Your current working branch is from an older version of ' + opt.branch + '. Please rebase first by using git pull --rebase')
     sys.exit(1)
 
   git_configure_reviewboard="git config reviewboard.url https://reviews.apache.org"
-  print "Configuring reviewboard url to https://reviews.apache.org"
+  print("Configuring reviewboard url to https://reviews.apache.org")
   p=os.popen(git_configure_reviewboard)
   p.close()
 
   git_remote_update="git remote update"
-  print "Updating your remote branches to pull the latest changes"
+  print("Updating your remote branches to pull the latest changes")
   p=os.popen(git_remote_update)
   p.close()
 
@@ -113,34 +113,34 @@ def main():
   if opt.testing:
     rb_command=rb_command + " --testing-done=" + opt.testing
   if opt.debug:
-    print rb_command
+    print(rb_command)
   p=os.popen(rb_command)
   rb_url=""
   for line in p:
-    print line
+    print (line)
     if line.startswith('http'):
       rb_url = line
     elif line.startswith("There don't seem to be any diffs"):
-      print 'ERROR: Your reviewboard was not created/updated since there was no diff to upload. The reasons that can cause this issue are 1) Your diff is not checked into your local branch. Please check in the diff to the local branch and retry 2) You are not specifying the local branch name as part of the --branch option. Please specify the remote branch name obtained from git branch -r'
+      print('ERROR: Your reviewboard was not created/updated since there was no diff to upload. The reasons that can cause this issue are 1) Your diff is not checked into your local branch. Please check in the diff to the local branch and retry 2) You are not specifying the local branch name as part of the --branch option. Please specify the remote branch name obtained from git branch -r')
       p.close()
       sys.exit(1)
     elif line.startswith("Your review request still exists, but the diff is not attached") and not opt.debug:
-      print 'ERROR: Your reviewboard was not created/updated. Please run the script with the --debug option to troubleshoot the problem'
+      print('ERROR: Your reviewboard was not created/updated. Please run the script with the --debug option to troubleshoot the problem')
       p.close()
       sys.exit(1)
   if p.close() != None:
-    print 'ERROR: reviewboard update failed. Exiting.'
+    print('ERROR: reviewboard update failed. Exiting.')
     sys.exit(1)
   if opt.debug:
-    print 'rb url=',rb_url
+    print('rb url=',rb_url)
 
   git_command="git format-patch " + opt.branch + " --stdout > " + patch_file
   if opt.debug:
-    print git_command
+    print(git_command)
   p=os.popen(git_command)
   p.close()
 
-  print 'Creating diff against', opt.branch, 'and uploading patch to JIRA',opt.jira
+  print('Creating diff against', opt.branch, 'and uploading patch to JIRA',opt.jira)
   jira=get_jira()
   issue = jira.issue(opt.jira)
   attachment=open(patch_file)
@@ -149,9 +149,9 @@ def main():
 
   comment="Created reviewboard "
   if not opt.reviewboard:
-    print 'Created a new reviewboard',rb_url,
+    print('Created a new reviewboard',rb_url,)
   else:
-    print 'Updated reviewboard',rb_url
+    print('Updated reviewboard',rb_url)
     comment="Updated reviewboard "
 
   comment = comment + rb_url + ' against branch ' + opt.branch
