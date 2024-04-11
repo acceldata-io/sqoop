@@ -46,7 +46,10 @@ repositories {
     maven {
         url 'https://artifacts.alfresco.com/nexus/content/repositories/public/'
     }
+    maven {
+     url 'https://maven.aliyun.com/repository/spring-plugin/'
 
+    }
     // Oracle driver repository
     maven {
         url 'http://www.datanucleus.org/downloads/maven2/'
