@@ -205,7 +205,7 @@ not present in the previous release, %(oldversion)s.</p>
   
   # Sort the output list by issue type.
   types = jira_info.keys()
-  types.sort()
+  types = sorted(types)
   for typ in types:
     output_lines.append("<h4>" + user_issue_type(typ) + ":</h4><ul>\n")
     for (issue, summary) in jira_info[typ]:
