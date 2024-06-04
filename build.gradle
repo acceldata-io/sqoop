@@ -51,6 +51,12 @@ repositories {
     maven {
         url 'http://www.datanucleus.org/downloads/maven2/'
     }
+    maven {
+        url 'https://maven.aliyun.com/repository/spring-plugin'
+    }
+    maven {
+        url 'http://repo1.acceldata.dev/repository/odp-central'
+    }
 }
 
 sourceSets {
