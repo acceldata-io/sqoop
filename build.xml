@@ -40,7 +40,7 @@
   <property environment="env"/>
   <property name="name" value="sqoop" />
   <property name="Name" value="Sqoop" />
-  <property name="version" value="1.4.8.3.2.3.0-SNAPSHOT" />
+  <property name="version" value="1.4.8.3.3.6.0-1" />
 
   <!-- Ivy library properties -->
   <property name="ivy.dir" location="${basedir}/ivy" />
