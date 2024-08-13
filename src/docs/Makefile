@@ -43,20 +43,22 @@ REVDATE=$(shell date)
 
 website: 
 	mkdir -p $(WEBSITE_DIR)
-    asciidoctor --safe -a revnumber=$(VERSION) \
+
+	asciidoctor --safe -a revnumber=$(VERSION) \
                 -b html5 \
                 -o $(WEBSITE_DIR)/SqoopUserGuide.html \
                 user/SqoopUserGuide.txt
 
-    asciidoctor --safe -a revnumber=$(VERSION) \
+	asciidoctor --safe -a revnumber=$(VERSION) \
                 -b html5 \
                 -o $(WEBSITE_DIR)/SqoopDevGuide.html \
                 dev/SqoopDevGuide.txt
 
-    asciidoctor --safe -a revnumber=$(VERSION) \
+	asciidoctor --safe -a revnumber=$(VERSION) \
                 -b html5 \
                 -o $(WEBSITE_DIR)/index.html \
                 web/index.txt
+
 	cp web/docbook.css $(WEBSITE_DIR)
 	rsync -a web/images $(WEBSITE_DIR)/
 
