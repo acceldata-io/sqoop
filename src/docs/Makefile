@@ -43,60 +43,49 @@ REVDATE=$(shell date)
 
 website: 
 	mkdir -p $(WEBSITE_DIR)
-	asciidoc --unsafe -a revnumber=$(VERSION) \
-		-b docbook \
-		user/SqoopUserGuide.txt
-	xmlto $(VALIDATION) -o $(WEBSITE_DIR) -m web/html.xsl \
-		html-nochunks user/SqoopUserGuide.xml
-	asciidoc --unsafe -a revnumber=$(VERSION) \
-		-b docbook \
-		dev/SqoopDevGuide.txt
-	xmlto $(VALIDATION) -o $(WEBSITE_DIR) -m web/html.xsl \
-		html-nochunks dev/SqoopDevGuide.xml
-	asciidoc --unsafe -a revnumber=$(VERSION) \
-	  -b docbook \
-		web/index.txt
-	xmlto $(VALIDATION) -o $(WEBSITE_DIR) -m web/html.xsl \
-		html-nochunks web/index.xml
+    asciidoctor --safe -a revnumber=$(VERSION) \
+                -b html5 \
+                -o $(WEBSITE_DIR)/SqoopUserGuide.html \
+                user/SqoopUserGuide.txt
+
+    asciidoctor --safe -a revnumber=$(VERSION) \
+                -b html5 \
+                -o $(WEBSITE_DIR)/SqoopDevGuide.html \
+                dev/SqoopDevGuide.txt
+
+    asciidoctor --safe -a revnumber=$(VERSION) \
+                -b html5 \
+                -o $(WEBSITE_DIR)/index.html \
+                web/index.txt
 	cp web/docbook.css $(WEBSITE_DIR)
 	rsync -a web/images $(WEBSITE_DIR)/
 
 man: $(MANPAGES)
 
 %.1.gz : %.txt
-	asciidoc --unsafe -b docbook -d manpage -a "author=Sqoop Team" $<
-	xmlto man $(VALIDATION) $*.xml -o man
+	asciidoctor --backend=manpage -a author="Sqoop Team" -o man/$*.1 $<
 	gzip $*.1
 	rm $*.xml
 	mkdir -p $(BUILD_DIR)
 	mv $@ $(BUILD_DIR)
 
-$(BUILD_DIR)/SqoopUserGuide.html: user/*.txt
+$(BUILD_DIR)/SqoopUserGuide.html: user/SqoopUserGuide.txt
 	mkdir -p $(BUILD_DIR)
-	asciidoc --unsafe -a revnumber=$(VERSION) \
-		-b docbook \
+	asciidoctor --backend=html5 -a revnumber=$(VERSION) \
+		-o $(BUILD_DIR)/SqoopUserGuide.html \
 		user/SqoopUserGuide.txt
-	xmlto $(VALIDATION) -o $(BUILD_DIR) -m web/html.xsl \
-		html-nochunks user/SqoopUserGuide.xml
-	rm user/SqoopUserGuide.xml
 
-$(BUILD_DIR)/SqoopDevGuide.html: dev/*.txt
+$(BUILD_DIR)/SqoopDevGuide.html: dev/SqoopDevGuide.txt
 	mkdir -p $(BUILD_DIR)
-	asciidoc --unsafe -a revnumber=$(VERSION) \
-		-b docbook \
+	asciidoctor --backend=html5 -a revnumber=$(VERSION) \
+		-o $(BUILD_DIR)/SqoopDevGuide.html \
 		dev/SqoopDevGuide.txt
-	xmlto $(VALIDATION) -o $(BUILD_DIR) -m web/html.xsl \
-		html-nochunks dev/SqoopDevGuide.xml
-	rm dev/SqoopDevGuide.xml
 
 $(BUILD_DIR)/index.html: web/index.txt
 	mkdir -p $(BUILD_DIR)
-	asciidoc --unsafe -a revnumber=$(VERSION) \
-	  -b docbook \
+	asciidoctor --backend=html5 -a revnumber=$(VERSION) \
+		-o $(BUILD_DIR)/index.html \
 		web/index.txt
-	xmlto $(VALIDATION) -o $(BUILD_DIR) -m web/html.xsl \
-		html-nochunks web/index.xml
-	rm web/index.xml
 
 supportfiles:
 	mkdir -p $(BUILD_DIR)
