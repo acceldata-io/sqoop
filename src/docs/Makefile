@@ -22,8 +22,6 @@ BUILD_DIR=$(BUILDROOT)/docs
 
 VERSION=Unknown
 
-# Building documentation under CentOS causes xmlto to have issues
-# with validation. Disable this step.
 VALIDATION=$(shell ( lsb_release -d | grep CentOS > /dev/null 2>&1 ) \
        && echo "--skip-validation" )
 
@@ -40,25 +38,17 @@ MANPAGES=$(MANSOURCES:.txt=.1.gz)
 
 REVDATE=$(shell date)
 
-
-website: 
+website:
 	mkdir -p $(WEBSITE_DIR)
-
-	asciidoctor --safe -a revnumber=$(VERSION) \
-                -b html5 \
-                -o $(WEBSITE_DIR)/SqoopUserGuide.html \
-                user/SqoopUserGuide.txt
-
-	asciidoctor --safe -a revnumber=$(VERSION) \
-                -b html5 \
-                -o $(WEBSITE_DIR)/SqoopDevGuide.html \
-                dev/SqoopDevGuide.txt
-
-	asciidoctor --safe -a revnumber=$(VERSION) \
-                -b html5 \
-                -o $(WEBSITE_DIR)/index.html \
-                web/index.txt
-
+	asciidoctor -b html5 -a revnumber=$(VERSION) \
+		-o $(WEBSITE_DIR)/SqoopUserGuide.html \
+		user/SqoopUserGuide.txt
+	asciidoctor -b html5 -a revnumber=$(VERSION) \
+		-o $(WEBSITE_DIR)/SqoopDevGuide.html \
+		dev/SqoopDevGuide.txt
+	asciidoctor -b html5 -a revnumber=$(VERSION) \
+	 	-o $(WEBSITE_DIR)/index.html \
+		web/index.txt
 	cp web/docbook.css $(WEBSITE_DIR)
 	rsync -a web/images $(WEBSITE_DIR)/
 
@@ -66,27 +56,28 @@ man: $(MANPAGES)
 
 %.1.gz : %.txt
 	mkdir -p man
-	asciidoctor --backend=manpage -a author="Sqoop Team" -o man/$*.1 $<
-	gzip $*.1
+	asciidoctor --backend=manpage -a author="Sqoop Team" \
+		-o man/$*.1 $<
+	gzip man/$*.1
 	mkdir -p $(BUILD_DIR)
-	mv $@ $(BUILD_DIR)
+	mv man/$*.1.gz $(BUILD_DIR)
 
-$(BUILD_DIR)/SqoopUserGuide.html: user/SqoopUserGuide.txt
+$(BUILD_DIR)/SqoopUserGuide.html: user/*.txt
 	mkdir -p $(BUILD_DIR)
-	asciidoctor --backend=html5 -a revnumber=$(VERSION) \
+	asciidoctor -b html5 -a revnumber=$(VERSION) \
 		-o $(BUILD_DIR)/SqoopUserGuide.html \
 		user/SqoopUserGuide.txt
 
-$(BUILD_DIR)/SqoopDevGuide.html: dev/SqoopDevGuide.txt
+$(BUILD_DIR)/SqoopDevGuide.html: dev/*.txt
 	mkdir -p $(BUILD_DIR)
-	asciidoctor --backend=html5 -a revnumber=$(VERSION) \
+	asciidoctor -b html5 -a revnumber=$(VERSION) \
 		-o $(BUILD_DIR)/SqoopDevGuide.html \
 		dev/SqoopDevGuide.txt
 
 $(BUILD_DIR)/index.html: web/index.txt
 	mkdir -p $(BUILD_DIR)
-	asciidoctor --backend=html5 -a revnumber=$(VERSION) \
-		-o $(BUILD_DIR)/index.html \
+	asciidoctor -b html5 -a revnumber=$(VERSION) \
+	 	-o $(BUILD_DIR)/index.html \
 		web/index.txt
 
 supportfiles:
