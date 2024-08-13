@@ -65,9 +65,9 @@ website:
 man: $(MANPAGES)
 
 %.1.gz : %.txt
+	mkdir -p man
 	asciidoctor --backend=manpage -a author="Sqoop Team" -o man/$*.1 $<
 	gzip $*.1
-	rm $*.xml
 	mkdir -p $(BUILD_DIR)
 	mv $@ $(BUILD_DIR)
 
