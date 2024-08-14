@@ -559,28 +559,33 @@ task realDocs(type: Exec, dependsOn: ['relnotes', 'javadoc']) {
 task docs(dependsOn: ['realDocs', 'relnotes', 'javadoc']) {
     //placeholder
 }
-def $mvnRepo = System.getProperty("mvnRepo", "snapshots")
+def regex = '[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]-(SNAPSHOT|[0-9])$'
+def snapRegex = '[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]-SNAPSHOT$'
 
 publishing {
     repositories {
         maven {
-            name "cloudera." + $mvnRepo + ".repo"
-            url "https://repository.cloudera.com/content/repositories/"+$mvnRepo
+            if(version.matches(snapRegex))
+                url = snapMavenUrl
+            else
+                url = mavenUrl
             credentials {
-                username 'username'
-                password 'password'
+                username = mavenUsername
+                password = mavenPassword
             }
         }
     }
 }
 publishing {
     publications {
-        sqoop(MavenPublication) {
-            groupId group
-            version  version
-            from components.java
-            artifact sourceJar {
-                classifier "sources"
+        if(version.matches(regex)) {
+            sqoop(MavenPublication) {
+                groupId group
+                version version
+                from components.java
+                artifact sourceJar {
+                    classifier "sources"
+                }
             }
         }
         sqoopTest(MavenPublication) {
