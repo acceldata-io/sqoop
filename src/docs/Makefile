@@ -22,8 +22,7 @@ BUILD_DIR=$(BUILDROOT)/docs
 
 VERSION=Unknown
 
-VALIDATION=$(shell ( lsb_release -d | grep CentOS > /dev/null 2>&1 ) \
-       && echo "--skip-validation" )
+VALIDATION=$(shell command -v lsb_release > /dev/null 2>&1 && ( lsb_release -d | grep CentOS > /dev/null 2>&1 ) && echo "--skip-validation" || echo "")
 
 all: man userguide devguide supportfiles index
 
