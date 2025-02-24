@@ -1,4 +1,4 @@
-#!/usr/bin/env/python
+#!/usr/bin/env ambari-python-wrap
 #
 # Copyright 2011 The Apache Software Foundation
 #
