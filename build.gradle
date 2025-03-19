@@ -547,7 +547,7 @@ task release(dependsOn: ['checkVersion', 'tar', 'rat']) {
 task relnotes(type: Exec)  {
     workingDir 'src/scripts'
     if (!version.contains('SNAPSHOT')) {
-        commandLine "ambari-python-wrap", "relnotes.py", "$buildDir/docs", "$projectDir", "$oldHash\\..HEAD", "$version", "$oldVersion"
+        commandLine "python", "relnotes.py", "$buildDir/docs", "$projectDir", "$oldHash\\..HEAD", "$version", "$oldVersion"
     } else {
         commandLine "true" //noop
         println "Will not run releasenotes for SNAPSHOT version."
