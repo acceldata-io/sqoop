@@ -57,6 +57,9 @@ repositories {
     maven {
         url 'http://repo1.acceldata.dev/repository/odp-central'
     }
+    maven {
+        url 'http://repo1.acceldata.dev/repository/odp-staging-central'
+    }
 }
 
 sourceSets {
