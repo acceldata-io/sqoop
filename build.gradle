@@ -147,6 +147,8 @@ dependencies {
     common group: 'org.apache.hbase', name: 'hbase-server', version: hbaseVersion
     common group: 'org.apache.hbase', name: 'hbase-client', version: hbaseVersion
     common group: 'org.apache.hbase', name: 'hbase-common', version: hbaseVersion
+    common group: 'org.apache.hbase', name: 'hbase-mapreduce', version: hbaseVersion
+    common group: 'org.apache.derby', name: 'derby', version: derbyVersion
     common(group: 'org.apache.hive.hcatalog', name: 'hive-hcatalog-core', version: hcatalogVersion) {
         exclude group: 'org.apache.avro', module: 'avro'
         exclude group: 'org.apache.hive', module: 'hive-exec'
