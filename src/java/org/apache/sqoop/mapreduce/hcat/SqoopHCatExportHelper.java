@@ -108,9 +108,14 @@ public class SqoopHCatExportHelper {
         + recordClassName);
     }
 
-    String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    jobInfo =
-      (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    // Use the robust InputJobInfo selector to handle various deserialization scenarios
+    InputJobInfoSelector.SelectionResult selectionResult = InputJobInfoSelector.selectInputJobInfo(conf);
+    jobInfo = selectionResult.getSelectedJobInfo();
+    
+    // Log selection details for transparency
+    LOG.info("InputJobInfo selection completed. Strategy: " + selectionResult.getUsedStrategy() + 
+             ", Reason: " + selectionResult.getSelectionReason() + 
+             ", Candidates: " + selectionResult.getValidCandidates() + "/" + selectionResult.getTotalCandidates());
     HCatSchema tableSchema = jobInfo.getTableInfo().getDataColumns();
     HCatSchema partitionSchema =
       jobInfo.getTableInfo().getPartitionColumns();
@@ -200,13 +205,35 @@ public class SqoopHCatExportHelper {
         }
         break;
       case TIMESTAMP:
-        Timestamp ts = (Timestamp) val;
+        // val may be either java.sql.Timestamp (legacy) or
+        // org.apache.hadoop.hive.common.type.Timestamp (Hive 3.x+). Normalize.
+        Timestamp tsObj = null;
+        if (val instanceof Timestamp) {
+          tsObj = (Timestamp) val;
+        } else {
+          // Attempt reflection-based conversion from Hive's internal Timestamp class.
+          try {
+            String hiveTsClassName = "org.apache.hadoop.hive.common.type.Timestamp";
+            if (val.getClass().getName().equals(hiveTsClassName)) {
+              // Use string representation for a loss-free conversion.
+              String tsString = val.toString();
+              tsObj = Timestamp.valueOf(tsString);
+            }
+          } catch (Throwable ignore) {
+            // Fallback handled below if still null.
+          }
+        }
+        if (tsObj == null) {
+          throw new IOException("Unable to convert Hive Timestamp value of type "
+                  + val.getClass().getName() + " to java.sql.Timestamp");
+        }
+
         if (javaColType.equals(DATE_TYPE)) {
-          return new Date(ts.getTime());
+          return new Date(tsObj.getTime());
         } else if (javaColType.equals(TIME_TYPE)) {
-          return new Time(ts.getTime());
+          return new Time(tsObj.getTime());
         } else if (javaColType.equals(TIMESTAMP_TYPE)) {
-          return ts;
+            return tsObj;
         }
         break;
       case STRING:

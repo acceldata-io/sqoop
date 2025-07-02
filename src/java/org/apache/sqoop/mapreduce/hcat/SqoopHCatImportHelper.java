@@ -84,8 +84,14 @@ public class SqoopHCatImportHelper {
   public SqoopHCatImportHelper(Configuration conf) throws IOException,
     InterruptedException {
 
-    String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    jobInfo = (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    // Use the robust InputJobInfo selector to handle various deserialization scenarios
+    InputJobInfoSelector.SelectionResult selectionResult = InputJobInfoSelector.selectInputJobInfo(conf);
+    jobInfo = selectionResult.getSelectedJobInfo();
+    
+    // Log selection details for transparency
+    LOG.info("InputJobInfo selection completed. Strategy: " + selectionResult.getUsedStrategy() + 
+             ", Reason: " + selectionResult.getSelectionReason() + 
+             ", Candidates: " + selectionResult.getValidCandidates() + "/" + selectionResult.getTotalCandidates());
     dataColsSchema = jobInfo.getTableInfo().getDataColumns();
     partitionSchema = jobInfo.getTableInfo().getPartitionColumns();
     StringBuilder storerInfoStr = new StringBuilder(1024);
@@ -275,7 +281,7 @@ public class SqoopHCatImportHelper {
     if (val instanceof java.sql.Date) {
       d = (Date) val;
       if (hfsType == HCatFieldSchema.Type.DATE) {
-        return d;
+        return createHiveDate(d.getTime(), d.toString());
       } else if (hfsType == HCatFieldSchema.Type.TIMESTAMP) {
         return new Timestamp(d.getTime());
       } else if (hfsType == HCatFieldSchema.Type.BIGINT) {
@@ -294,7 +300,7 @@ public class SqoopHCatImportHelper {
     } else if (val instanceof java.sql.Time) {
       t = (Time) val;
       if (hfsType == HCatFieldSchema.Type.DATE) {
-        return new Date(t.getTime());
+        return createHiveDate(t.getTime(), new Date(t.getTime()).toString());
       } else if (hfsType == HCatFieldSchema.Type.TIMESTAMP) {
         return new Timestamp(t.getTime());
       } else if (hfsType == HCatFieldSchema.Type.BIGINT) {
@@ -313,8 +319,39 @@ public class SqoopHCatImportHelper {
     } else if (val instanceof java.sql.Timestamp) {
       ts = (Timestamp) val;
       if (hfsType == HCatFieldSchema.Type.DATE) {
-        return new Date(ts.getTime());
+        return createHiveDate(ts.getTime(), new Date(ts.getTime()).toString());
       } else if (hfsType == HCatFieldSchema.Type.TIMESTAMP) {
+        // Hive 3.x+ expects org.apache.hadoop.hive.common.type.Timestamp objects, whereas
+        // older versions accept java.sql.Timestamp. Attempt to adapt at runtime so the
+        // generated object is compatible with whichever Hive Timestamp class is available
+        // on the classpath.
+        try {
+          Class<?> hiveTsClazz = Class.forName("org.apache.hadoop.hive.common.type.Timestamp", false,
+                  Thread.currentThread().getContextClassLoader());
+          // Prefer a valueOf(String) factory as it exists in most Hive versions.
+          try {
+            java.lang.reflect.Method valueOf = hiveTsClazz.getMethod("valueOf", String.class);
+            return valueOf.invoke(null, ts.toString());
+          } catch (NoSuchMethodException nsm) {
+            // Fallback to ofEpochMilli(long) if available
+            try {
+              java.lang.reflect.Method ofEpochMilli = hiveTsClazz.getMethod("ofEpochMilli", long.class);
+              return ofEpochMilli.invoke(null, ts.getTime());
+            } catch (NoSuchMethodException nsm2) {
+              // Last resort: attempt a long constructor
+              try {
+                java.lang.reflect.Constructor<?> ctor = hiveTsClazz.getConstructor(long.class);
+                return ctor.newInstance(ts.getTime());
+              } catch (Throwable reflectionError) {
+                // give up – fall back to java.sql.Timestamp
+              }
+            }
+          }
+        } catch (ClassNotFoundException cnfe) {
+          // Hive common Timestamp class not present; continue with java.sql.Timestamp
+        } catch (Throwable reflectionError) {
+          // Any unexpected reflection failure – fall back.
+        }
         return ts;
       } else if (hfsType == HCatFieldSchema.Type.BIGINT) {
         return ts.getTime();
@@ -480,5 +517,33 @@ public class SqoopHCatImportHelper {
     if (null != lobLoader) {
       lobLoader.close();
     }
+  }
+  private Object createHiveDate(long timeMillis, String dateString) {
+    // Attempt to create an instance of Hive's own Date class when available,
+    // otherwise fall back to java.sql.Date.
+    try {
+      Class<?> hiveDateClazz = Class.forName("org.apache.hadoop.hive.common.type.Date", false,
+              Thread.currentThread().getContextClassLoader());
+      try {
+        // First preference: valueOf(String)
+        java.lang.reflect.Method valueOf = hiveDateClazz.getMethod("valueOf", String.class);
+        return valueOf.invoke(null, dateString);
+      } catch (NoSuchMethodException nsme) {
+        // Second preference: ofEpochMilli(long)
+        try {
+          java.lang.reflect.Method ofEpochMilli = hiveDateClazz.getMethod("ofEpochMilli", long.class);
+          return ofEpochMilli.invoke(null, timeMillis);
+        } catch (NoSuchMethodException nsme2) {
+          // Final attempt: public constructor with long millis
+          java.lang.reflect.Constructor<?> ctor = hiveDateClazz.getConstructor(long.class);
+          return ctor.newInstance(timeMillis);
+        }
+      }
+    } catch (ClassNotFoundException cnfe) {
+      // Hive Date class not present – fall through to java.sql.Date
+    } catch (Throwable reflectionError) {
+      // Any reflection related issue: fallback to java.sql.Date
+    }
+    return new Date(timeMillis);
   }
 }
