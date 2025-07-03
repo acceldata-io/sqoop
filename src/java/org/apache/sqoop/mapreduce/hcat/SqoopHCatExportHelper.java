@@ -109,8 +109,17 @@ public class SqoopHCatExportHelper {
     }
 
     String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    jobInfo =
-      (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    // Fix for ClassCastException: Handle case where deserialize returns unexpected type
+    Object deserializedObj = HCatUtil.deserialize(inputJobInfoStr);
+    if (deserializedObj instanceof InputJobInfo) {
+      jobInfo = (InputJobInfo) deserializedObj;
+    } else {
+      // Handle the case where deserialize returns a different type (like LinkedList)
+      // This can happen due to version mismatches or serialization format issues
+      throw new IOException("Failed to deserialize InputJobInfo. Expected InputJobInfo but got " 
+        + (deserializedObj != null ? deserializedObj.getClass().getName() : "null") 
+        + ". This may indicate a version compatibility issue between HCatalog components.");
+    }
     HCatSchema tableSchema = jobInfo.getTableInfo().getDataColumns();
     HCatSchema partitionSchema =
       jobInfo.getTableInfo().getPartitionColumns();
