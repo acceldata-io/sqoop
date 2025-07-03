@@ -169,3 +169,20 @@ This fix resolves a critical runtime issue that was causing Sqoop jobs to fail w
 - **Minimal performance impact** while maintaining robustness
 
 The changes are backward compatible and maintain the existing API while adding essential error handling and version compatibility features.
+
+## Latest Enhancement: Comprehensive List Validation
+
+**Additional Fix Applied:** Enhanced the list deserialization logic in both helper classes to properly handle multiple objects in the list returned by `HCatUtil.deserialize()`.
+
+### Enhanced Features:
+- **Complete list validation**: Checks all elements in the list, not just the first one
+- **Detailed logging**: Provides comprehensive information about list contents for debugging
+- **Multiple scenario handling**: Gracefully handles empty lists, single InputJobInfo, multiple InputJobInfo objects, and mixed object types
+- **Enhanced error reporting**: Clear error messages with full context about deserialization issues
+- **Backward compatibility**: Maintains existing functionality while adding robustness
+
+### Files Enhanced:
+- `src/java/org/apache/sqoop/mapreduce/hcat/SqoopHCatImportHelper.java` - Enhanced deserialization validation
+- `src/java/org/apache/sqoop/mapreduce/hcat/SqoopHCatExportHelper.java` - Enhanced deserialization validation
+
+This enhancement ensures that no objects in the deserialized list are silently ignored and provides visibility into potential serialization compatibility issues across different Hive/HCatalog versions.
