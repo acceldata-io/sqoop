@@ -85,7 +85,14 @@ public class SqoopHCatImportHelper {
     InterruptedException {
 
     String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    jobInfo = (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    Object deserializedObj = HCatUtil.deserialize(inputJobInfoStr);
+    if (deserializedObj instanceof InputJobInfo) {
+      jobInfo = (InputJobInfo) deserializedObj;
+    } else {
+      throw new IOException("Failed to deserialize InputJobInfo. Expected InputJobInfo but got " 
+        + (deserializedObj != null ? deserializedObj.getClass().getName() : "null") 
+        + ". This may indicate a version compatibility issue between HCatalog components.");
+    }
     dataColsSchema = jobInfo.getTableInfo().getDataColumns();
     partitionSchema = jobInfo.getTableInfo().getPartitionColumns();
     StringBuilder storerInfoStr = new StringBuilder(1024);
