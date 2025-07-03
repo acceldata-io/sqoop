@@ -108,67 +108,14 @@ public class SqoopHCatExportHelper {
         + recordClassName);
     }
 
-    String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    // Fix for ClassCastException: Handle case where deserialize returns unexpected type
-    Object deserializedObj = HCatUtil.deserialize(inputJobInfoStr);
-    if (deserializedObj instanceof InputJobInfo) {
-      jobInfo = (InputJobInfo) deserializedObj;
-    } else if (deserializedObj instanceof java.util.List) {
-      // Some Hive/HCat versions wrap InputJobInfo in a LinkedList. Attempt to unwrap.
-      java.util.List<?> list = (java.util.List<?>) deserializedObj;
-      
-      if (list.isEmpty()) {
-        throw new IOException("Failed to deserialize InputJobInfo. Deserialized as empty List. " +
-                "This may indicate a serialization issue.");
-      }
-      
-      // Validate all elements in the list for comprehensive debugging
-      int inputJobInfoCount = 0;
-      InputJobInfo foundJobInfo = null;
-      StringBuilder listContents = new StringBuilder("List contents (size=" + list.size() + "): [");
-      
-      for (int i = 0; i < list.size(); i++) {
-        Object element = list.get(i);
-        if (i > 0) listContents.append(", ");
-        
-        if (element instanceof InputJobInfo) {
-          inputJobInfoCount++;
-          if (foundJobInfo == null) {
-            foundJobInfo = (InputJobInfo) element;
-          }
-          listContents.append("InputJobInfo@").append(i);
-        } else {
-          listContents.append(element != null ? element.getClass().getSimpleName() : "null").append("@").append(i);
-        }
-      }
-      listContents.append("]");
-      
-      // Log the list contents for debugging
-      LOG.info("HCatalog deserialization returned List with " + list.size() + " elements. " + listContents.toString());
-      
-      if (inputJobInfoCount == 0) {
-        throw new IOException("Failed to deserialize InputJobInfo. Deserialized as List but contained no InputJobInfo objects. " + 
-                listContents.toString());
-      } else if (inputJobInfoCount == 1) {
-        // Expected case: exactly one InputJobInfo (possibly with other objects)
-        if (list.size() > 1) {
-          LOG.warn("HCatalog deserialization returned List with " + list.size() + " elements but only 1 InputJobInfo. " +
-                  "Using the InputJobInfo and ignoring other elements. " + listContents.toString());
-        }
-        jobInfo = foundJobInfo;
-      } else {
-        // Multiple InputJobInfo objects - this might indicate a real issue
-        LOG.error("HCatalog deserialization returned List with " + inputJobInfoCount + " InputJobInfo objects. " +
-                "This is unexpected and may indicate a serialization compatibility issue. " +
-                "Using the first InputJobInfo. " + listContents.toString());
-        jobInfo = foundJobInfo;
-      }
-    } else {
-      // Handle the case where deserialize returns an unexpected type
-      throw new IOException("Failed to deserialize InputJobInfo. Expected InputJobInfo but got "
-              + (deserializedObj != null ? deserializedObj.getClass().getName() : "null")
-              + ". This may indicate a version compatibility issue between HCatalog components.");
-    }
+    // Use the robust InputJobInfo selector to handle various deserialization scenarios
+    InputJobInfoSelector.SelectionResult selectionResult = InputJobInfoSelector.selectInputJobInfo(conf);
+    jobInfo = selectionResult.getSelectedJobInfo();
+    
+    // Log selection details for transparency
+    LOG.info("InputJobInfo selection completed. Strategy: " + selectionResult.getUsedStrategy() + 
+             ", Reason: " + selectionResult.getSelectionReason() + 
+             ", Candidates: " + selectionResult.getValidCandidates() + "/" + selectionResult.getTotalCandidates());
     HCatSchema tableSchema = jobInfo.getTableInfo().getDataColumns();
     HCatSchema partitionSchema =
       jobInfo.getTableInfo().getPartitionColumns();
