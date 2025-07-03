@@ -88,10 +88,18 @@ public class SqoopHCatImportHelper {
     Object deserializedObj = HCatUtil.deserialize(inputJobInfoStr);
     if (deserializedObj instanceof InputJobInfo) {
       jobInfo = (InputJobInfo) deserializedObj;
+    } else if (deserializedObj instanceof java.util.List) {
+      // Certain Hive/HCat versions wrap InputJobInfo in a LinkedList during serialization.
+      java.util.List<?> list = (java.util.List<?>) deserializedObj;
+      if (!list.isEmpty() && list.get(0) instanceof InputJobInfo) {
+        jobInfo = (InputJobInfo) list.get(0);
+      } else {
+        throw new IOException("Failed to deserialize InputJobInfo. Deserialized as List but did not contain InputJobInfo. List element type: "
+          + (!list.isEmpty() && list.get(0) != null ? list.get(0).getClass().getName() : "unknown") + ".");
+      }
     } else {
-      throw new IOException("Failed to deserialize InputJobInfo. Expected InputJobInfo but got " 
-        + (deserializedObj != null ? deserializedObj.getClass().getName() : "null") 
-        + ". This may indicate a version compatibility issue between HCatalog components.");
+      throw new IOException("Failed to deserialize InputJobInfo. Expected InputJobInfo but got "
+        + (deserializedObj != null ? deserializedObj.getClass().getName() : "null") + ". This may indicate a version compatibility issue between HCatalog components.");
     }
     dataColsSchema = jobInfo.getTableInfo().getDataColumns();
     partitionSchema = jobInfo.getTableInfo().getPartitionColumns();
