@@ -125,7 +125,7 @@ public class SqoopHCatExportHelper {
       // Validate all elements in the list for comprehensive debugging
       int inputJobInfoCount = 0;
       InputJobInfo foundJobInfo = null;
-      StringBuilder listContents = new StringBuilder("List contents: [");
+      StringBuilder listContents = new StringBuilder("List contents (size=" + list.size() + "): [");
       
       for (int i = 0; i < list.size(); i++) {
         Object element = list.get(i);
