@@ -84,8 +84,9 @@ public class SqoopHCatImportHelper {
   public SqoopHCatImportHelper(Configuration conf) throws IOException,
     InterruptedException {
 
-    String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    jobInfo = (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    //String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
+    //jobInfo = (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    jobInfo = HCatUtil.getLastInputJobInfosFromConf(conf);
     dataColsSchema = jobInfo.getTableInfo().getDataColumns();
     partitionSchema = jobInfo.getTableInfo().getPartitionColumns();
     StringBuilder storerInfoStr = new StringBuilder(1024);
