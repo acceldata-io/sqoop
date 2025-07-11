@@ -108,9 +108,7 @@ public class SqoopHCatExportHelper {
         + recordClassName);
     }
 
-    String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    jobInfo =
-      (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    jobInfo = HCatUtil.getLastInputJobInfosFromConf(conf);
     HCatSchema tableSchema = jobInfo.getTableInfo().getDataColumns();
     HCatSchema partitionSchema =
       jobInfo.getTableInfo().getPartitionColumns();
