@@ -84,8 +84,7 @@ public class SqoopHCatImportHelper {
   public SqoopHCatImportHelper(Configuration conf) throws IOException,
     InterruptedException {
 
-    String inputJobInfoStr = conf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-    jobInfo = (InputJobInfo) HCatUtil.deserialize(inputJobInfoStr);
+    jobInfo = HCatUtil.getLastInputJobInfosFromConf(conf);
     dataColsSchema = jobInfo.getTableInfo().getDataColumns();
     partitionSchema = jobInfo.getTableInfo().getPartitionColumns();
     StringBuilder storerInfoStr = new StringBuilder(1024);
@@ -275,9 +274,9 @@ public class SqoopHCatImportHelper {
     if (val instanceof java.sql.Date) {
       d = (Date) val;
       if (hfsType == HCatFieldSchema.Type.DATE) {
-        return d;
+        return org.apache.hadoop.hive.common.type.Date.valueOf(d.toString());
       } else if (hfsType == HCatFieldSchema.Type.TIMESTAMP) {
-        return new Timestamp(d.getTime());
+        return org.apache.hadoop.hive.common.type.Timestamp.valueOf(d.toString());
       } else if (hfsType == HCatFieldSchema.Type.BIGINT) {
         return (d.getTime());
       } else if (hfsType == HCatFieldSchema.Type.STRING) {
@@ -294,9 +293,9 @@ public class SqoopHCatImportHelper {
     } else if (val instanceof java.sql.Time) {
       t = (Time) val;
       if (hfsType == HCatFieldSchema.Type.DATE) {
-        return new Date(t.getTime());
+        return org.apache.hadoop.hive.common.type.Date.valueOf(t.toString());
       } else if (hfsType == HCatFieldSchema.Type.TIMESTAMP) {
-        return new Timestamp(t.getTime());
+        return org.apache.hadoop.hive.common.type.Timestamp.valueOf(t.toString());
       } else if (hfsType == HCatFieldSchema.Type.BIGINT) {
         return ((Time) val).getTime();
       } else if (hfsType == HCatFieldSchema.Type.STRING) {
@@ -313,9 +312,9 @@ public class SqoopHCatImportHelper {
     } else if (val instanceof java.sql.Timestamp) {
       ts = (Timestamp) val;
       if (hfsType == HCatFieldSchema.Type.DATE) {
-        return new Date(ts.getTime());
+        return org.apache.hadoop.hive.common.type.Date.valueOf(ts.toString());
       } else if (hfsType == HCatFieldSchema.Type.TIMESTAMP) {
-        return ts;
+        return org.apache.hadoop.hive.common.type.Timestamp.valueOf(ts.toString());
       } else if (hfsType == HCatFieldSchema.Type.BIGINT) {
         return ts.getTime();
       } else if (hfsType == HCatFieldSchema.Type.STRING) {
