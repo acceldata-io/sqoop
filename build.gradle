@@ -57,6 +57,9 @@ repositories {
     maven {
         url 'http://repo1.acceldata.dev/repository/odp-staging-central'
     }
+    maven {
+        url 'http://repo1.acceldata.dev/repository/odp-central'
+    }
 }
 
 sourceSets {
@@ -147,6 +150,8 @@ dependencies {
     common group: 'org.apache.hbase', name: 'hbase-server', version: hbaseVersion
     common group: 'org.apache.hbase', name: 'hbase-client', version: hbaseVersion
     common group: 'org.apache.hbase', name: 'hbase-common', version: hbaseVersion
+    common group: 'org.apache.hbase', name: 'hbase-mapreduce', version: hbaseVersion
+    common group: 'org.apache.derby', name: 'derby', version: derbyVersion
     common(group: 'org.apache.hive.hcatalog', name: 'hive-hcatalog-core', version: hcatalogVersion) {
         exclude group: 'org.apache.avro', module: 'avro'
         exclude group: 'org.apache.hive', module: 'hive-exec'
@@ -559,7 +564,7 @@ task realDocs(type: Exec, dependsOn: ['relnotes', 'javadoc']) {
 task docs(dependsOn: ['realDocs', 'relnotes', 'javadoc']) {
     //placeholder
 }
-def regex = '[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]-(SNAPSHOT|[0-9])$'
+def regex = '[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]-(SNAPSHOT|[0-9]+)$'
 def snapRegex = '[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]\\.[0-9]-SNAPSHOT$'
 
 publishing {
