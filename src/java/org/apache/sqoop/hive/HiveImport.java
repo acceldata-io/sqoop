@@ -43,6 +43,7 @@ import org.apache.sqoop.util.SubprocessSecurityManager;
 import org.apache.sqoop.SqoopOptions;
 import org.apache.sqoop.manager.ConnManager;
 import org.apache.sqoop.util.ExitSecurityException;
+import org.apache.sqoop.util.ProtobufCompat;
 
 import static org.apache.commons.lang3.StringUtils.defaultString;
 
@@ -61,6 +62,11 @@ public class HiveImport implements HiveClient {
   private boolean generateOnly;
   private HiveClientCommon hiveClientCommon;
   private static boolean testMode = false;
+  private boolean disableHiveProtoLoggingHook;
+  private boolean protoLoggingHookWarningEmitted;
+  private String hivePreHookOverride;
+  private String hivePostHookOverride;
+  private String hiveFailureHookOverride;
 
   public static boolean getTestMode() {
     return testMode;
@@ -75,6 +81,13 @@ public class HiveImport implements HiveClient {
       "org.apache.hadoop.hive.cli.CliDriver";
   private static final String SQOOP_HIVE_FORCE_EXTERNAL_CONF =
       "sqoop.hive.exec.force.external";
+  private static final String SQOOP_HIVE_DISABLE_PROTO_LOGGING_HOOK_CONF =
+      "sqoop.hive.disableProtoLoggingHook";
+  private static final String HIVE_EXEC_PRE_HOOKS = "hive.exec.pre.hooks";
+  private static final String HIVE_EXEC_POST_HOOKS = "hive.exec.post.hooks";
+  private static final String HIVE_EXEC_FAILURE_HOOKS = "hive.exec.failure.hooks";
+  private static final String HIVE_PROTO_LOGGING_HOOK_CLASS =
+      "org.apache.hadoop.hive.ql.hooks.HiveProtoLoggingHook";
 
   public HiveImport(final SqoopOptions opts, final ConnManager connMgr,
       final Configuration conf, final boolean generateOnly, final HiveClientCommon hiveClientCommon) {
@@ -339,45 +352,104 @@ public class HiveImport implements HiveClient {
   }
 
   private boolean shouldUseExternalHiveExecution() {
-    String forceExternal = configuration != null
-        ? configuration.get(SQOOP_HIVE_FORCE_EXTERNAL_CONF)
-        : null;
-    if (forceExternal == null) {
-      forceExternal = System.getProperty(SQOOP_HIVE_FORCE_EXTERNAL_CONF);
-    }
-    if (forceExternal != null && Boolean.parseBoolean(forceExternal)) {
+    if (getBooleanConfigValue(SQOOP_HIVE_FORCE_EXTERNAL_CONF)) {
       LOG.info("Property " + SQOOP_HIVE_FORCE_EXTERNAL_CONF
           + " is enabled; Hive will be executed in an external process.");
-      return true;
-    }
-
-    if (!hasLegacyGeneratedMessageBuilderAddAll()) {
-      LOG.warn("Detected Protobuf runtime without "
-          + "GeneratedMessage$Builder.addAll(Iterable,List); "
-          + "falling back to external Hive process to avoid incompatibility.");
       return true;
     }
 
     return false;
   }
 
-  private boolean hasLegacyGeneratedMessageBuilderAddAll() {
-    try {
-      Class<?> builderClass =
-          Class.forName("com.google.protobuf.GeneratedMessage$Builder");
-      builderClass.getDeclaredMethod("addAll", Iterable.class, List.class);
-      return true;
-    } catch (ClassNotFoundException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Protobuf GeneratedMessage$Builder not present on classpath.", e);
+  private boolean getBooleanConfigValue(String key) {
+    if (configuration != null) {
+      String confValue = configuration.get(key);
+      if (confValue != null) {
+        return Boolean.parseBoolean(confValue);
       }
-      return true;
-    } catch (NoSuchMethodException | LinkageError e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Protobuf GeneratedMessage$Builder.addAll(Iterable,List) not found.", e);
-      }
-      return false;
     }
+    String sysValue = System.getProperty(key);
+    if (sysValue != null) {
+      return Boolean.parseBoolean(sysValue);
+    }
+    return false;
+  }
+
+  private void configureHiveProtoLoggingHook() {
+    boolean forceDisable =
+        getBooleanConfigValue(SQOOP_HIVE_DISABLE_PROTO_LOGGING_HOOK_CONF);
+    boolean compatibilityIssue = !ProtobufCompat.supportsLegacyGeneratedMessageAddAll();
+
+    if (!forceDisable && !compatibilityIssue) {
+      return;
+    }
+
+    if (!disableHiveProtoLoggingHook) {
+      if (!protoLoggingHookWarningEmitted) {
+        if (forceDisable) {
+          LOG.info("Property " + SQOOP_HIVE_DISABLE_PROTO_LOGGING_HOOK_CONF
+              + " is enabled; HiveProtoLoggingHook will be skipped.");
+        } else {
+          LOG.warn("Disabling HiveProtoLoggingHook to maintain compatibility with "
+              + "the protobuf runtime that lacks "
+              + "GeneratedMessage$Builder.addAll(Iterable,List).");
+        }
+        protoLoggingHookWarningEmitted = true;
+      }
+      disableHiveProtoLoggingHook = true;
+    }
+
+    hivePreHookOverride = sanitizeHookSetting(HIVE_EXEC_PRE_HOOKS);
+    hivePostHookOverride = sanitizeHookSetting(HIVE_EXEC_POST_HOOKS);
+    hiveFailureHookOverride = sanitizeHookSetting(HIVE_EXEC_FAILURE_HOOKS);
+  }
+
+  private String sanitizeHookSetting(String key) {
+    String sanitized = sanitizeHooks(getHookSetting(key));
+    if (configuration != null) {
+      configuration.set(key, sanitized);
+    }
+    return sanitized;
+  }
+
+  private String getHookSetting(String key) {
+    if (configuration != null) {
+      String value = configuration.get(key);
+      if (value != null) {
+        return value;
+      }
+    }
+    return "";
+  }
+
+  private String sanitizeHooks(String hooks) {
+    if (hooks == null) {
+      return "";
+    }
+    String trimmedHooks = hooks.trim();
+    if (trimmedHooks.isEmpty()) {
+      return "";
+    }
+
+    String[] parts = trimmedHooks.split(",");
+    StringBuilder sanitized = new StringBuilder();
+    for (String part : parts) {
+      String candidate = part.trim();
+      if (candidate.isEmpty()
+          || HIVE_PROTO_LOGGING_HOOK_CLASS.equals(candidate)) {
+        continue;
+      }
+      if (sanitized.length() > 0) {
+        sanitized.append(',');
+      }
+      sanitized.append(candidate);
+    }
+    return sanitized.toString();
+  }
+
+  private void addHiveConfArg(List<String> hiveArgs, String key, String value) {
+    hiveArgs.add("--hiveconf");
+    hiveArgs.add(key + "=" + (value == null ? "" : value));
   }
 
   private String[] getHiveArgs(String... args) throws IOException {
@@ -385,6 +457,13 @@ public class HiveImport implements HiveClient {
     newArgs.addAll(Arrays.asList(args));
 
     HiveConfig.addHiveConfigs(HiveConfig.getHiveConf(configuration), configuration);
+    configureHiveProtoLoggingHook();
+
+    if (disableHiveProtoLoggingHook) {
+      addHiveConfArg(newArgs, HIVE_EXEC_PRE_HOOKS, hivePreHookOverride);
+      addHiveConfArg(newArgs, HIVE_EXEC_POST_HOOKS, hivePostHookOverride);
+      addHiveConfArg(newArgs, HIVE_EXEC_FAILURE_HOOKS, hiveFailureHookOverride);
+    }
 
     if (configuration.getBoolean(HiveConfig.HIVE_SASL_ENABLED, false)) {
       newArgs.add("--hiveconf");
