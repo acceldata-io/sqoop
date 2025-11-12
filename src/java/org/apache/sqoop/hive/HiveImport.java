@@ -73,6 +73,8 @@ public class HiveImport implements HiveClient {
   /** Entry point through which Hive invocation should be attempted. */
   private static final String HIVE_MAIN_CLASS =
       "org.apache.hadoop.hive.cli.CliDriver";
+  private static final String SQOOP_HIVE_FORCE_EXTERNAL_CONF =
+      "sqoop.hive.exec.force.external";
 
   public HiveImport(final SqoopOptions opts, final ConnManager connMgr,
       final Configuration conf, final boolean generateOnly, final HiveClientCommon hiveClientCommon) {
@@ -251,6 +253,12 @@ public class HiveImport implements HiveClient {
       return;
     }
 
+    if (shouldUseExternalHiveExecution()) {
+      LOG.info("Executing Hive script using external process.");
+      executeExternalHiveScript(filename, env);
+      return;
+    }
+
     try {
       Class cliDriverClass = Class.forName(HIVE_MAIN_CLASS);
 
@@ -327,6 +335,48 @@ public class HiveImport implements HiveClient {
     int ret = Executor.exec(argv, env.toArray(new String[0]), logSink, logSink);
     if (0 != ret) {
       throw new IOException("Hive exited with status " + ret);
+    }
+  }
+
+  private boolean shouldUseExternalHiveExecution() {
+    String forceExternal = configuration != null
+        ? configuration.get(SQOOP_HIVE_FORCE_EXTERNAL_CONF)
+        : null;
+    if (forceExternal == null) {
+      forceExternal = System.getProperty(SQOOP_HIVE_FORCE_EXTERNAL_CONF);
+    }
+    if (forceExternal != null && Boolean.parseBoolean(forceExternal)) {
+      LOG.info("Property " + SQOOP_HIVE_FORCE_EXTERNAL_CONF
+          + " is enabled; Hive will be executed in an external process.");
+      return true;
+    }
+
+    if (!hasLegacyGeneratedMessageBuilderAddAll()) {
+      LOG.warn("Detected Protobuf runtime without "
+          + "GeneratedMessage$Builder.addAll(Iterable,List); "
+          + "falling back to external Hive process to avoid incompatibility.");
+      return true;
+    }
+
+    return false;
+  }
+
+  private boolean hasLegacyGeneratedMessageBuilderAddAll() {
+    try {
+      Class<?> builderClass =
+          Class.forName("com.google.protobuf.GeneratedMessage$Builder");
+      builderClass.getDeclaredMethod("addAll", Iterable.class, List.class);
+      return true;
+    } catch (ClassNotFoundException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Protobuf GeneratedMessage$Builder not present on classpath.", e);
+      }
+      return true;
+    } catch (NoSuchMethodException | LinkageError e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Protobuf GeneratedMessage$Builder.addAll(Iterable,List) not found.", e);
+      }
+      return false;
     }
   }
 
