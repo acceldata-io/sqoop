@@ -118,6 +118,10 @@ configurations.all {
         force group: 'com.google.guava', name: 'guava', version: guavaVersion
         force group: 'com.google.protobuf', name: 'protobuf-java', version: hiveProtobufVersion
         force group: 'io.airlift', name: 'aircompressor', version: aircompressorVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-server', version: jettyVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-util', version: jettyVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-http', version: jettyVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-io', version: jettyVersion
     }
     exclude group: 'org.apache.hadoop', module: 'avro'
 }
