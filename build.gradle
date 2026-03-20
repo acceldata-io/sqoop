@@ -122,6 +122,9 @@ configurations.all {
         force group: 'org.eclipse.jetty', name: 'jetty-util', version: jettyVersion
         force group: 'org.eclipse.jetty', name: 'jetty-http', version: jettyVersion
         force group: 'org.eclipse.jetty', name: 'jetty-io', version: jettyVersion
+        force group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
+        force group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+        force group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
     }
     exclude group: 'org.apache.hadoop', module: 'avro'
 }
