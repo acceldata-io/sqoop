@@ -117,6 +117,7 @@ configurations.all {
         force group: 'org.apache.avro', name: 'avro-mapred', version: avroVersion
         force group: 'com.google.guava', name: 'guava', version: guavaVersion
         force group: 'com.google.protobuf', name: 'protobuf-java', version: hiveProtobufVersion
+        force group: 'io.airlift', name: 'aircompressor', version: aircompressorVersion
     }
     exclude group: 'org.apache.hadoop', module: 'avro'
 }
