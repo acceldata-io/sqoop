@@ -129,6 +129,11 @@ under the License.
     <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="${jackson-databind.version}"
           conf="common->default;redist->default" />
 
+    <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="${jackson-asl.version}"
+          conf="common->default;redist->default" />
+    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="${jackson-asl.version}"
+          conf="common->default;redist->default" />
+
     <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"
                 conf="common->default;redist->default" />
 
