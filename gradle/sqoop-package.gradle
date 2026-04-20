@@ -41,6 +41,8 @@ dependencies {
     redist group: 'org.apache.commons', name: 'commons-lang3', version: commonslang3Version
     redist group: 'commons-lang', name: 'commons-lang', version: commonslangVersion
     redist group: 'org.apache.parquet', name: 'parquet-avro', version: parquetVersion
+    redist group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: jacksonAslVersion
+    redist group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: jacksonAslVersion
 }
 
 //Jar tasks
