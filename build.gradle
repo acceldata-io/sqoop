@@ -55,10 +55,10 @@ repositories {
         url 'https://maven.aliyun.com/repository/spring-plugin'
     }
     maven {
-        url 'http://repo1.acceldata.dev/repository/odp-staging-central'
+        url 'http://repo1.acceldata.dev/repository/odp-central'
     }
     maven {
-        url 'http://repo1.acceldata.dev/repository/odp-staging-central'
+        url 'http://repo1.acceldata.dev/repository/odp-central'
     }
     maven {
         url 'http://repo1.acceldata.dev/repository/odp-central'
@@ -115,8 +115,18 @@ configurations.all {
     resolutionStrategy {
         force group: 'org.apache.avro', name: 'avro', version: avroVersion
         force group: 'org.apache.avro', name: 'avro-mapred', version: avroVersion
+        force group: 'com.amazonaws', name: 'aws-java-sdk-bundle', version: awsJavaSdkBundleVersion
         force group: 'com.google.guava', name: 'guava', version: guavaVersion
         force group: 'com.google.protobuf', name: 'protobuf-java', version: hiveProtobufVersion
+        force group: 'io.airlift', name: 'aircompressor', version: aircompressorVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-server', version: jettyVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-util', version: jettyVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-http', version: jettyVersion
+        force group: 'org.eclipse.jetty', name: 'jetty-io', version: jettyVersion
+        force group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
+        force group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+        force group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
+        force group: 'org.yaml', name: 'snakeyaml', version: snakeyamlVersion
     }
     exclude group: 'org.apache.hadoop', module: 'avro'
 }
