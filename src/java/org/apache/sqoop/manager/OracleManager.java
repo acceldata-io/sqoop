@@ -455,6 +455,18 @@ public class OracleManager
     super.importTable(context);
   }
 
+  @Override
+  public void importQuery(
+      org.apache.sqoop.manager.ImportJobContext context)
+      throws IOException, ImportException {
+    context.setConnManager(this);
+    // Specify the Oracle-specific DBInputFormat so OracleDateSplitter is used
+    // for DATE/TIMESTAMP split columns instead of the generic DateSplitter,
+    // which emits bare string literals incompatible with Oracle.
+    context.setInputFormat(OracleDataDrivenDBInputFormat.class);
+    super.importQuery(context);
+  }
+
   /**
    * Export data stored in HDFS into a table in a database.
    */
