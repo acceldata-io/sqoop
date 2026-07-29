@@ -122,8 +122,16 @@ configurations.all {
         force group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
         force group: 'org.apache.commons', name: 'commons-lang3', version: commonslang3Version
         force group: 'org.yaml', name: 'snakeyaml', version: snakeyamlVersion
+        // OCR-2571: force Hive-compatible thrift; drop Log4j2 bridge that conflicts with reload4j
+        force group: 'org.apache.thrift', name: 'libthrift', version: libthriftVersion
     }
     exclude group: 'org.apache.hadoop', module: 'avro'
+    // OCR-2571: Log4j2 bridge + reload4j on same CP causes LogEventAdapter VerifyError
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-1.2-api'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-web'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
 }
 
 def forkEveryDefault = Integer.valueOf(System.getProperty("forkEvery.default", "0"))
