@@ -119,7 +119,7 @@ configurations.all {
         force group: 'org.eclipse.jetty', name: 'jetty-io', version: jettyVersion
         force group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
         force group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
-        force group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
+        force group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonAnnotationsVersion
         force group: 'org.apache.commons', name: 'commons-lang3', version: commonslang3Version
         force group: 'org.yaml', name: 'snakeyaml', version: snakeyamlVersion
         // OCR-2571: force Hive-compatible thrift; drop Log4j2 bridge that conflicts with reload4j
