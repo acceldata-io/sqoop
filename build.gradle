@@ -124,6 +124,15 @@ configurations.all {
         force group: 'org.yaml', name: 'snakeyaml', version: snakeyamlVersion
         // OCR-2571: force Hive-compatible thrift; drop Log4j2 bridge that conflicts with reload4j
         force group: 'org.apache.thrift', name: 'libthrift', version: libthriftVersion
+        // hbase-server pulls tomcat-jasper 9.0.106 (-> tomcat-util 9.0.106) with multiple CVEs
+        // (CVE-2026-65927/65905/66422/65183/65182/68525); align whole org.apache.tomcat set to 9.0.121
+        force group: 'org.apache.tomcat', name: 'tomcat-jasper', version: tomcatVersion
+        force group: 'org.apache.tomcat', name: 'tomcat-jasper-el', version: tomcatVersion
+        force group: 'org.apache.tomcat', name: 'tomcat-juli', version: tomcatVersion
+        force group: 'org.apache.tomcat', name: 'tomcat-el-api', version: tomcatVersion
+        force group: 'org.apache.tomcat', name: 'tomcat-api', version: tomcatVersion
+        force group: 'org.apache.tomcat', name: 'tomcat-util-scan', version: tomcatVersion
+        force group: 'org.apache.tomcat', name: 'tomcat-util', version: tomcatVersion
     }
     exclude group: 'org.apache.hadoop', module: 'avro'
     // OCR-2571: Log4j2 bridge + reload4j on same CP causes LogEventAdapter VerifyError
@@ -167,6 +176,16 @@ dependencies {
     common group: 'org.apache.hbase', name: 'hbase-client', version: hbaseVersion
     common group: 'org.apache.hbase', name: 'hbase-common', version: hbaseVersion
     common group: 'org.apache.hbase', name: 'hbase-mapreduce', version: hbaseVersion
+    // hbase-server transitively pulls tomcat-jasper 9.0.106 -> tomcat-util 9.0.106 (CVEs).
+    // Declare the org.apache.tomcat set directly so the published Sqoop POM resolves 9.0.121
+    // (nearest-wins over hbase-server's transitive 9.0.106) for Oozie's sqoop sharelib.
+    common group: 'org.apache.tomcat', name: 'tomcat-jasper', version: tomcatVersion
+    common group: 'org.apache.tomcat', name: 'tomcat-jasper-el', version: tomcatVersion
+    common group: 'org.apache.tomcat', name: 'tomcat-juli', version: tomcatVersion
+    common group: 'org.apache.tomcat', name: 'tomcat-el-api', version: tomcatVersion
+    common group: 'org.apache.tomcat', name: 'tomcat-api', version: tomcatVersion
+    common group: 'org.apache.tomcat', name: 'tomcat-util-scan', version: tomcatVersion
+    common group: 'org.apache.tomcat', name: 'tomcat-util', version: tomcatVersion
     common group: 'org.apache.derby', name: 'derby', version: derbyVersion
     common(group: 'org.apache.hive.hcatalog', name: 'hive-hcatalog-core', version: hcatalogVersion) {
         exclude group: 'org.apache.avro', module: 'avro'
